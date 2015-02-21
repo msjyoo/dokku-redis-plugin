@@ -63,9 +63,9 @@ case "$1" in
     ID=$(docker ps -a | grep "$REDIS_IMAGE":latest |  awk '{print $1}')
     if [[ ! -z $ID ]]; then
         docker stop $ID
-		docker rm $ID
+        docker rm $ID
     fi
-	
+
     # Remove image
     IMAGE=$(docker images | grep "$REDIS_IMAGE " |  awk '{print $1}')
     if [[ ! -z $IMAGE ]]; then
@@ -108,17 +108,17 @@ case "$1" in
             if [[ ! -f $ENV_FILE ]]; then
                 touch $ENV_FILE
             fi
-			
-			# Write REDIS_HOST
+
+            # Write REDIS_HOST
             ENV_TEMP=$(cat "${ENV_FILE}" | sed "/^export REDIS_HOST=/ d")
-			ENV_TEMP="${ENV_TEMP}\nexport ${REDIS_HOST}"
-			echo -e "$ENV_TEMP" | sed '/^$/d' | sort > $ENV_FILE
-			
-			# Write REDIS_PORT
+            ENV_TEMP="${ENV_TEMP}\nexport ${REDIS_HOST}"
+            echo -e "$ENV_TEMP" | sed '/^$/d' | sort > $ENV_FILE
+
+            # Write REDIS_PORT
             ENV_TEMP=$(cat "${ENV_FILE}" | sed "/^export REDIS_PORT=/ d")
             ENV_TEMP="${ENV_TEMP}\nexport ${REDIS_PORT}"
-			echo -e "$ENV_TEMP" | sed '/^$/d' | sort > $ENV_FILE
-			
+            echo -e "$ENV_TEMP" | sed '/^$/d' | sort > $ENV_FILE
+
             echo
             echo "-----> $APP linked to $REDIS_IMAGE container"
         fi
