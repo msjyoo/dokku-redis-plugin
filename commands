@@ -63,10 +63,8 @@ case "$1" in
     ID=$(docker ps -a | grep "$REDIS_IMAGE":latest |  awk '{print $1}')
     if [[ ! -z $ID ]]; then
         docker stop $ID
+		docker rm $ID
     fi
-	
-	# Wait for the container to shut down
-	sleep 4
 	
     # Remove image
     IMAGE=$(docker images | grep "$REDIS_IMAGE " |  awk '{print $1}')
