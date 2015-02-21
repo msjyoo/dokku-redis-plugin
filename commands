@@ -64,6 +64,10 @@ case "$1" in
     if [[ ! -z $ID ]]; then
         docker stop $ID
     fi
+	
+	# Wait for the container to shut down
+	sleep 4
+	
     # Remove image
     IMAGE=$(docker images | grep "$REDIS_IMAGE " |  awk '{print $1}')
     if [[ ! -z $IMAGE ]]; then
