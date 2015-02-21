@@ -22,7 +22,7 @@ case "$1" in
   redis:create)
     REDIS_IMAGE=redis/$APP
     # Check if Redis container is installed
-    IMAGE=$(docker images | grep "luxifer/redis " |  awk '{print $3}')
+    IMAGE=$(docker images | grep "sekjun9878/redis " |  awk '{print $3}')
     if [[ -z $IMAGE ]]; then
         echo "Redis image not found... Did you run 'dokku plugins-install' ?"
         exit 1
@@ -42,7 +42,7 @@ case "$1" in
         docker stop $ID > /dev/null
     fi
     # Fork Redis image
-    ID=$(docker run -d luxifer/redis /bin/bash "exit 0")
+    ID=$(docker run -d sekjun9878/redis /bin/bash "exit 0")
     docker wait $ID > /dev/null
     IMAGE=$(docker commit $ID)
     docker tag $IMAGE $REDIS_IMAGE
@@ -82,10 +82,9 @@ case "$1" in
     REDIS_IMAGE=redis/$APP
     ID=$(docker ps -a | grep "$REDIS_IMAGE":latest |  awk '{print $1}')
     IP=$(docker inspect $ID | grep IPAddress | awk '{ print $2 }' | tr -d ',"')
-    PORT="6379"
     echo
     echo "       Host: $IP"
-    echo "       Public port: $PORT"
+    echo "       Port: 6379 (Default)"
     echo
     ;;
 

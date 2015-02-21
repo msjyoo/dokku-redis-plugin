@@ -6,9 +6,10 @@ Project: https://github.com/progrium/dokku
 Installation
 ------------
 ```
-cd /var/lib/dokku/plugins
-git clone https://github.com/luxifer/dokku-redis-plugin redis
-dokku plugins-install
+$ sudo su
+# cd /var/lib/dokku/plugins
+# git clone https://github.com/sekjun9878/dokku-redis-plugin redis
+# dokku plugins-install
 ```
 
 
@@ -34,7 +35,7 @@ $ ssh dokku@server redis:create foo # Client side
 -----> Redis container created: redis/foo
 
        Host: 172.16.0.104
-       Public port: 49187
+       Port: 6379 (Default)
 ```
 
 Deploy your app with the same name (client side):
