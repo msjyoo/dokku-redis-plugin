@@ -47,7 +47,7 @@ case "$1" in
     IMAGE=$(docker commit $ID)
     docker tag $IMAGE $REDIS_IMAGE
     # Launch container
-    ID=$(docker run -v $VOLUME -p 6379 -d $REDIS_IMAGE /bin/start_redis.sh)
+    ID=$(docker run -v $VOLUME -d $REDIS_IMAGE /bin/start_redis.sh)
     sleep 4
     # Link to a potential existing app
     dokku redis:link $APP $APP
@@ -82,7 +82,7 @@ case "$1" in
     REDIS_IMAGE=redis/$APP
     ID=$(docker ps -a | grep "$REDIS_IMAGE":latest |  awk '{print $1}')
     IP=$(docker inspect $ID | grep IPAddress | awk '{ print $2 }' | tr -d ',"')
-    PORT=$(docker port $ID 6379 | cut -d":" -f2)
+    PORT="6379"
     echo
     echo "       Host: $IP"
     echo "       Public port: $PORT"
