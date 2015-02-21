@@ -9,3 +9,5 @@ RUN sed -i 's@daemonize yes@daemonize no@' /etc/redis/redis.conf
 ADD . /bin
 RUN chmod +x /bin/start_redis.sh
 RUN mkdir -p /var/lib/redis
+
+EXPOSE 6379/tcp

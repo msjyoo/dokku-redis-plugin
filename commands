@@ -19,126 +19,105 @@ fi
 
 case "$1" in
 
-  redis:create)
-    REDIS_IMAGE=redis/$APP
+  redis:start)
+    REDIS_CONTAINER_NAME="redis-$APP"
+	
+	echo "-----> Starting Redis for $APP..."
+	
     # Check if Redis container is installed
     IMAGE=$(docker images | grep "sekjun9878/redis " |  awk '{print $3}')
     if [[ -z $IMAGE ]]; then
-        echo "Redis image not found... Did you run 'dokku plugins-install' ?"
+        echo "-----> Redis image not found... Did you run 'dokku plugins-install'?"
         exit 1
     fi
+	
+	# Check if Redis is already running
+    ID=$(docker ps | grep "$REDIS_CONTAINER_NAME" |  awk '{print $1}')
+    if [[ ! -z "$ID" ]]; then
+        echo "-----> Redis container already running: $REDIS_CONTAINER_NAME"
+        exit 0
+    fi
+	
     # Check if an existing DB volume exists
     HOST_DIR="$DOKKU_ROOT/.redis/volume-$APP"
     if [[ -d $HOST_DIR ]]; then
-        echo
-        echo "-----> Reusing redis/$APP database"
+        echo "-----> Reusing volume-$APP volume"
     else
+		echo "-----> Creating new volume"
         mkdir -p $HOST_DIR
+		echo "       Volume volume-$APP created"
     fi
     VOLUME="$HOST_DIR:/var/lib/redis"
-    # Stop existing container with the same persistent Redis
-    ID=$(docker ps | grep "$REDIS_IMAGE":latest |  awk '{print $1}')
-    if [[ ! -z "$ID" ]]; then
-        docker stop $ID > /dev/null
-    fi
-    # Fork Redis image
-    ID=$(docker run -d sekjun9878/redis /bin/bash "exit 0")
-    docker wait $ID > /dev/null
-    IMAGE=$(docker commit $ID)
-    docker tag $IMAGE $REDIS_IMAGE
+	
     # Launch container
-    ID=$(docker run -v $VOLUME -d $REDIS_IMAGE /bin/start_redis.sh)
-    sleep 4
+    ID=$(docker run --rm -v $VOLUME --name $REDIS_CONTAINER_NAME -d $REDIS_IMAGE /bin/start_redis.sh)
+	sleep 4
+    echo "-----> Redis container started: $REDIS_CONTAINER_NAME"
+	
     # Link to a potential existing app
-    dokku redis:link $APP $APP
-    echo
-    echo "-----> Redis container created: $REDIS_IMAGE"
+    dokku link:create $APP $REDIS_CONTAINER_NAME redis
+    echo "-----> Redis container linked: $APP -> $REDIS_CONTAINER_NAME"
     sleep 1
-    dokku redis:info $APP
+	
+	echo "=====> Redis started:"
+	echo "       $REDIS_CONTAINER_NAME"
+	
+	# If being called manually (e.g. not from a build hook)
+	if [ $3 -ne 1]; then
+		echo "       Please rebuild the app for the linking to apply"
+	fi
+	
+	sleep 1
     ;;
 
-  redis:delete)
-    REDIS_IMAGE=redis/$APP
+  redis:destroy)
+    REDIS_CONTAINER_NAME="redis-$APP"
+	
+	echo " !    WARNING: Potentially Destructive Action"
+    echo " !    This command will destroy the Redis instance for"
+	echo " !    $APP (including all volumes and data)."
+    echo " !    To proceed, type \"$APP\""
+	
     # Stop the container
-    ID=$(docker ps -a | grep "$REDIS_IMAGE":latest |  awk '{print $1}')
+	ID=$(docker ps | grep "$REDIS_CONTAINER_NAME" |  awk '{print $1}')
     if [[ ! -z $ID ]]; then
         docker stop $ID
+    fi
+	
+	# Remove the container
+    ID=$(docker ps -a | grep "$REDIS_CONTAINER_NAME" |  awk '{print $1}')
+    if [[ ! -z $ID ]]; then
         docker rm $ID
     fi
-
-    # Remove image
-    IMAGE=$(docker images | grep "$REDIS_IMAGE " |  awk '{print $1}')
-    if [[ ! -z $IMAGE ]]; then
-        docker rmi $IMAGE
-    fi
+	
     # Remove persistent volume
     HOST_DIR="$DOKKU_ROOT/.redis/volume-$APP"
     if [[ -d $HOST_DIR ]]; then
         rm -rf $HOST_DIR
     fi
+	
+	dokku link:delete $APP $REDIS_CONTAINER_NAME redis
+	
     echo
-    echo "-----> Redis container deleted: $REDIS_IMAGE"
-    ;;
-
-  redis:info)
-    REDIS_IMAGE=redis/$APP
-    ID=$(docker ps -a | grep "$REDIS_IMAGE":latest |  awk '{print $1}')
-    IP=$(docker inspect $ID | grep IPAddress | awk '{ print $2 }' | tr -d ',"')
-    echo
-    echo "       Host: $IP"
-    echo "       Port: 6379 (Default)"
-    echo
-    ;;
-
-  redis:link)
-    if $APP_EXISTS; then
-        # Check argument
-        if [[ -z $3 ]]; then
-            echo "You must specify a container name"
-            exit 1
-        fi
-        REDIS_IMAGE="redis/$3"
-        ID=$(docker ps -a | grep "$REDIS_IMAGE":latest |  awk '{print $1}')
-        if [[ -n "$ID" ]]; then
-            IP=$(docker inspect $ID | grep IPAddress | awk '{ print $2 }' | tr -d ',"')
-            # Write REDIS_HOST/PORT to app's ENV file
-            REDIS_HOST="REDIS_HOST=$IP"
-            REDIS_PORT="REDIS_PORT=6379"
-            ENV_FILE="$DOKKU_ROOT/$APP/ENV"
-            if [[ ! -f $ENV_FILE ]]; then
-                touch $ENV_FILE
-            fi
-
-            # Write REDIS_HOST
-            ENV_TEMP=$(cat "${ENV_FILE}" | sed "/^export REDIS_HOST=/ d")
-            ENV_TEMP="${ENV_TEMP}\nexport ${REDIS_HOST}"
-            echo -e "$ENV_TEMP" | sed '/^$/d' | sort > $ENV_FILE
-
-            # Write REDIS_PORT
-            ENV_TEMP=$(cat "${ENV_FILE}" | sed "/^export REDIS_PORT=/ d")
-            ENV_TEMP="${ENV_TEMP}\nexport ${REDIS_PORT}"
-            echo -e "$ENV_TEMP" | sed '/^$/d' | sort > $ENV_FILE
-
-            echo
-            echo "-----> $APP linked to $REDIS_IMAGE container"
-        fi
-    fi
+    echo "-----> Redis container destroyed: $REDIS_IMAGE"
     ;;
 
   redis:logs)
-    REDIS_IMAGE=redis/$APP
-    ID=$(docker ps -a | grep "$REDIS_IMAGE" |  awk '{print $1}')
-    docker logs $ID | tail -n 100
+    REDIS_CONTAINER_NAME="redis-$APP"
+    docker logs $REDIS_CONTAINER_NAME | tail -n 100
     ;;
 
   help)
     cat && cat<<EOF
-    redis:create <rd>                               Create a Redis container
-    redis:delete <rd>                               Delete specified Redis container
-    redis:info <rd>                                 Display container information
-    redis:link <app> <rd>                           Link an app to a Redis container
-    redis:logs <rd>                                 Display last logs from Redis container
+    redis:start <app>                               Start a Redis container for an app
+	redis:stop <app>                                Stop a Redis container of an app
+    redis:destroy <app>                             Destroy Redis volume of an app
+    redis:logs <app>                                Display last logs from Redis for an app
 EOF
     ;;
 
+  *)
+    exit $DOKKU_NOT_IMPLEMENTED_EXIT
+	;;
+	
 esac

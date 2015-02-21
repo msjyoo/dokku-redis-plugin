@@ -2,5 +2,6 @@
 
 APP="$1"
 
-# For now, both the DB and the app will have to have the same name.
-dokku redis:link $APP $APP
+# Start the redis instance for this app, if one is not already running,
+# And make a link. The 1 at the end is to indicate that this is being run from a build hook
+dokku redis:start $APP 1
