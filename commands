@@ -37,7 +37,10 @@ case "$1" in
 
     REDIS_CONTAINER_NAME="redis-$APP"
 
-    dokku redis:enable $APP
+    # If being called manually (e.g. not from a build hook)
+    if [[ $3 -ne 1 ]]; then
+        dokku redis:enable $APP
+    fi
 
     dokku_log_info1 "Starting Redis for $APP..."
 
@@ -82,7 +85,7 @@ case "$1" in
     sleep 1
 
     dokku_log_info2 "Redis started:"
-	dokku_log_verbose "Application: $APP"
+    dokku_log_verbose "Application: $APP"
     dokku_log_verbose "Redis: $REDIS_CONTAINER_NAME"
 
     # If being called manually (e.g. not from a build hook)
@@ -117,7 +120,7 @@ case "$1" in
     fi
 
     dokku_log_info2 "Redis removed:"
-	dokku_log_verbose "Application: $APP"
+    dokku_log_verbose "Application: $APP"
 
     dokku redis:start $APP
     ;;
@@ -167,7 +170,7 @@ case "$1" in
     fi
 
     dokku_log_info2 "Redis container destroyed:"
-	dokku_log_verbose "Application: $APP"
+    dokku_log_verbose "Application: $APP"
 
     sleep 1
     ;;
