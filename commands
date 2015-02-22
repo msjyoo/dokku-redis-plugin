@@ -18,34 +18,27 @@ case "$1" in
 
   redis:enable)
     verify_app_name $APP
-	
+
     REDIS_CONTAINER_NAME="redis-$APP"
-	REDIS_FLAG_PERSISTENCE_FILE="$DOKKU_ROOT/$APP/REDIS"
+    REDIS_FLAG_PERSISTENCE_FILE="$DOKKU_ROOT/$APP/REDIS"
 
     dokku_log_info1 "Enabling Redis for $APP..."
-	
-	touch $REDIS_FLAG_PERSISTENCE_FILE
-	
-	echo
-	
-	dokku_log_info2 "Redis enabled for $APP"
-	dokku_log_verbose "Redis will be started on next build / deploy"
-	
-	sleep 1
+
+    touch $REDIS_FLAG_PERSISTENCE_FILE
+
+    dokku_log_info2 "Redis enabled for $APP"
+    dokku_log_verbose "Redis will be started on next build / deploy"
+
+    sleep 1
     ;;
   
   redis:start)
     verify_app_name $APP
-	
+
     REDIS_CONTAINER_NAME="redis-$APP"
 
-	# If being called automatically (e.g. from a build hook)
-    if [[ $3 -eq 1 ]]; then
-        echo
-    fi
-	
-	dokku redis:enable $APP
-	
+    dokku redis:enable $APP
+
     dokku_log_info1 "Starting Redis for $APP..."
 
     # Check if Redis container is installed
@@ -75,111 +68,96 @@ case "$1" in
     else
         dokku_log_info1 "Creating new volume"
         mkdir -p $HOST_DIR
-        dokku_log_verbose "Volume volume-$APP created"
     fi
     VOLUME="$HOST_DIR:/var/lib/redis"
 
     # Launch container
-	dokku_log_info1 "Starting Redis container..."
+    dokku_log_info1 "Starting Redis container..."
     ID=$(docker run -v $VOLUME --name $REDIS_CONTAINER_NAME -d sekjun9878/redis /bin/start_redis.sh)
     sleep 4
-	dokku_log_verbose
-    dokku_log_verbose "Redis container started: $REDIS_CONTAINER_NAME"
 
     # Link to app
     dokku link:create $APP $REDIS_CONTAINER_NAME redis
     dokku_log_info1 "Redis container linked: $APP -> $REDIS_CONTAINER_NAME"
     sleep 1
 
-	dokku_log_info1
     dokku_log_info2 "Redis started:"
-    dokku_log_verbose "$REDIS_CONTAINER_NAME"
+	dokku_log_verbose "Application: $APP"
+    dokku_log_verbose "Redis: $REDIS_CONTAINER_NAME"
 
     # If being called manually (e.g. not from a build hook)
     if [[ $3 -ne 1 ]]; then
         dokku_log_verbose "Please rebuild the app for the linking to apply"
-	else
-		echo
     fi
 
     sleep 1
     ;;
-	
+
   redis:rebuild)
     verify_app_name $APP
-	
+
     REDIS_CONTAINER_NAME="redis-$APP"
 
     dokku_log_info1 "Rebuilding Redis for $APP..."
     dokku_log_info1 "Removing Redis for $APP..."
-	
-	# Stop the container
-	ID=$(docker ps | grep "$REDIS_CONTAINER_NAME" |  awk '{print $1}')
+
+    # Stop the container
+    ID=$(docker ps | grep "$REDIS_CONTAINER_NAME" |  awk '{print $1}')
     if [[ ! -z $ID ]]; then
-		dokku_log_info1 "Stopping Redis container"
-        docker stop $ID
-	else
-		dokku_log_info1 "No online Redis container to stop"
+        docker stop $ID > /dev/null
     fi
-	
-	# Remove docker link
-	dokku_log_info1 "Removing Redis container link with $APP"
-	dokku link:delete $APP $REDIS_CONTAINER_NAME redis
+
+    # Remove docker link
+    dokku link:delete $APP $REDIS_CONTAINER_NAME redis
 
     # Remove the container
     ID=$(docker ps -a | grep "$REDIS_CONTAINER_NAME" |  awk '{print $1}')
     if [[ ! -z $ID ]]; then
-		dokku_log_info1 "Removing Redis container"
-        docker rm $ID
-	else
-		dokku_log_info1 "No Redis container to remove"
+        docker rm $ID > /dev/null
     fi
-	
-	dokku_log_info2 "Redis removed for $APP"
-	
-	dokku redis:start $APP
-	;;
+
+    dokku_log_info2 "Redis removed:"
+	dokku_log_verbose "Application: $APP"
+
+    dokku redis:start $APP
+    ;;
 
   redis:destroy)
     verify_app_name $APP
-	
-    REDIS_CONTAINER_NAME="redis-$APP"
-	REDIS_FLAG_PERSISTENCE_FILE="$DOKKU_ROOT/$APP/REDIS"
 
-	echo
-    dokku_log_info1 "Destroying Redis for $APP..."
+    REDIS_CONTAINER_NAME="redis-$APP"
+    REDIS_FLAG_PERSISTENCE_FILE="$DOKKU_ROOT/$APP/REDIS"
 
     dokku_log_warn "WARNING: Potentially Destructive Action"
     dokku_log_warn "This command will destroy the Redis instance for"
     dokku_log_warn "$APP (including all volumes and data)."
     dokku_log_warn "To proceed, type \"$APP\""
-	echo
-	
-	read -p "> " app_name_verification
-	if [[ "$app_name_verification" != "$APP" ]]; then 
-		dokku_log_warn "Confirmation did not match. Aborted." 
-		exit 1 
-	fi
-	
-	echo
+    echo
+
+    read -p "> " app_name_verification
+    if [[ "$app_name_verification" != "$APP" ]]; then
+        dokku_log_warn "Confirmation did not match. Aborted."
+        exit 1
+    fi
+
     dokku_log_info1 "Destroying Redis for $APP..."
-	
-	# Disable Redis autostart
-	[[ -f "$REDIS_FLAG_PERSISTENCE_FILE" ]] && rm "$REDIS_FLAG_PERSISTENCE_FILE"
-	
+
+    # Disable Redis autostart
+    [[ -f "$REDIS_FLAG_PERSISTENCE_FILE" ]] && rm "$REDIS_FLAG_PERSISTENCE_FILE"
+
     # Stop the container
     ID=$(docker ps | grep "$REDIS_CONTAINER_NAME" |  awk '{print $1}')
     if [[ ! -z $ID ]]; then
-        docker stop $ID
+        docker stop $ID > /dev/null
     fi
-	
-	# Remove docker link
-	dokku link:delete $APP $REDIS_CONTAINER_NAME redis
+
+    # Remove docker link
+    dokku link:delete $APP $REDIS_CONTAINER_NAME redis
 
     # Remove the container
     ID=$(docker ps -a | grep "$REDIS_CONTAINER_NAME" |  awk '{print $1}')
     if [[ ! -z $ID ]]; then
-        docker rm $ID
+        docker rm $ID > /dev/null
     fi
 
     # Remove persistent volume
@@ -188,10 +166,10 @@ case "$1" in
         rm -rf $HOST_DIR
     fi
 
-    echo
-    echo "-----> Redis container destroyed: $APP"
-	
-	sleep 1
+    dokku_log_info2 "Redis container destroyed:"
+	dokku_log_verbose "Application: $APP"
+
+    sleep 1
     ;;
 
   redis:logs)
