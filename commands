@@ -1,95 +1,180 @@
-#!/bin/bash
-set -e;
+#!/usr/bin/env bash
+source "$(dirname $0)/../common/functions"
+# Reset bash mode from importing the functions
+set +exo pipefail
+# Fail on equation failure
+set -e
 
 # Check if name is specified
 if [[ $1 == redis:* ]]; then
     if [[ -z $2 ]]; then
-        echo "You must specify an app name"
-        exit 1
+        dokku_log_fail "You must specify an app name"
     else
         APP="$2"
-        # Check if app exists with the same name
-        if [[ -d "$DOKKU_ROOT/$APP" ]]; then
-            APP_EXISTS=true
-        else
-            APP_EXISTS=false
-        fi
     fi
 fi
 
 case "$1" in
 
+  redis:enable)
+    verify_app_name $APP
+	
+    REDIS_CONTAINER_NAME="redis-$APP"
+	REDIS_FLAG_PERSISTENCE_FILE="$DOKKU_ROOT/$APP/REDIS"
+
+    dokku_log_info1 "Enabling Redis for $APP..."
+	
+	touch $REDIS_FLAG_PERSISTENCE_FILE
+	
+	echo
+	
+	dokku_log_info2 "Redis enabled for $APP"
+	dokku_log_verbose "Redis will be started on next build / deploy"
+	
+	sleep 1
+    ;;
+  
   redis:start)
+    verify_app_name $APP
+	
     REDIS_CONTAINER_NAME="redis-$APP"
 
-    echo "-----> Starting Redis for $APP..."
+	# If being called automatically (e.g. from a build hook)
+    if [[ $3 -eq 1 ]]; then
+        echo
+    fi
+	
+	dokku redis:enable $APP
+	
+    dokku_log_info1 "Starting Redis for $APP..."
 
     # Check if Redis container is installed
-    IMAGE=$(docker images | grep "sekjun9878/redis " |  awk '{print $3}')
+    IMAGE=$(docker images | grep "sekjun9878/redis" | awk '{print $3}')
     if [[ -z $IMAGE ]]; then
-        echo "-----> Redis image not found... Did you run 'dokku plugins-install'?"
-        exit 1
+        dokku_log_fail "Redis image not found! Did you run 'dokku plugins-install'?"
     fi
 
     # Check if Redis is already running
-    ID=$(docker ps | grep "$REDIS_CONTAINER_NAME" |  awk '{print $1}')
-    if [[ ! -z "$ID" ]]; then
-        echo "-----> Redis container already running: $REDIS_CONTAINER_NAME"
+    ID=$(docker ps | grep "$REDIS_CONTAINER_NAME" | awk '{print $1}')
+    if [[ ! -z $ID ]]; then
+        dokku_log_verbose "Redis container already running: $REDIS_CONTAINER_NAME"
         exit 0
     fi
 
     # Remove old stopped container with the same name, if it exists
-    ID=$(docker ps -a | grep "$REDIS_CONTAINER_NAME" |  awk '{print $1}')
+    ID=$(docker ps -a | grep "$REDIS_CONTAINER_NAME" | awk '{print $1}')
     if [[ ! -z $ID ]]; then
         ID=$(docker rm $ID)
-        echo "-----> Removed stale Redis container $ID"
+        dokku_log_info1 "Removed stale Redis container $ID"
     fi
 
     # Check if an existing DB volume exists
     HOST_DIR="$DOKKU_ROOT/.redis/volume-$APP"
     if [[ -d $HOST_DIR ]]; then
-        echo "-----> Reusing volume-$APP volume"
+        dokku_log_info1 "Reusing volume-$APP volume"
     else
-        echo "-----> Creating new volume"
+        dokku_log_info1 "Creating new volume"
         mkdir -p $HOST_DIR
-        echo "       Volume volume-$APP created"
+        dokku_log_verbose "Volume volume-$APP created"
     fi
     VOLUME="$HOST_DIR:/var/lib/redis"
 
     # Launch container
-    ID=$(docker run -v $VOLUME --name $REDIS_CONTAINER_NAME -d $REDIS_IMAGE /bin/start_redis.sh)
+	dokku_log_info1 "Starting Redis container..."
+    ID=$(docker run -v $VOLUME --name $REDIS_CONTAINER_NAME -d sekjun9878/redis /bin/start_redis.sh)
     sleep 4
-    echo "-----> Redis container started: $REDIS_CONTAINER_NAME"
+	dokku_log_verbose
+    dokku_log_verbose "Redis container started: $REDIS_CONTAINER_NAME"
 
-    # Link to a potential existing app
+    # Link to app
     dokku link:create $APP $REDIS_CONTAINER_NAME redis
-    echo "-----> Redis container linked: $APP -> $REDIS_CONTAINER_NAME"
+    dokku_log_info1 "Redis container linked: $APP -> $REDIS_CONTAINER_NAME"
     sleep 1
 
-    echo "=====> Redis started:"
-    echo "       $REDIS_CONTAINER_NAME"
+	dokku_log_info1
+    dokku_log_info2 "Redis started:"
+    dokku_log_verbose "$REDIS_CONTAINER_NAME"
 
     # If being called manually (e.g. not from a build hook)
-    if [ $3 -ne 1]; then
-        echo "       Please rebuild the app for the linking to apply"
+    if [[ $3 -ne 1 ]]; then
+        dokku_log_verbose "Please rebuild the app for the linking to apply"
+	else
+		echo
     fi
 
     sleep 1
     ;;
-
-  redis:destroy)
+	
+  redis:rebuild)
+    verify_app_name $APP
+	
     REDIS_CONTAINER_NAME="redis-$APP"
 
-    echo " !    WARNING: Potentially Destructive Action"
-    echo " !    This command will destroy the Redis instance for"
-    echo " !    $APP (including all volumes and data)."
-    echo " !    To proceed, type \"$APP\""
+    dokku_log_info1 "Rebuilding Redis for $APP..."
+    dokku_log_info1 "Removing Redis for $APP..."
+	
+	# Stop the container
+	ID=$(docker ps | grep "$REDIS_CONTAINER_NAME" |  awk '{print $1}')
+    if [[ ! -z $ID ]]; then
+		dokku_log_info1 "Stopping Redis container"
+        docker stop $ID
+	else
+		dokku_log_info1 "No online Redis container to stop"
+    fi
+	
+	# Remove docker link
+	dokku_log_info1 "Removing Redis container link with $APP"
+	dokku link:delete $APP $REDIS_CONTAINER_NAME redis
 
+    # Remove the container
+    ID=$(docker ps -a | grep "$REDIS_CONTAINER_NAME" |  awk '{print $1}')
+    if [[ ! -z $ID ]]; then
+		dokku_log_info1 "Removing Redis container"
+        docker rm $ID
+	else
+		dokku_log_info1 "No Redis container to remove"
+    fi
+	
+	dokku_log_info2 "Redis removed for $APP"
+	
+	dokku redis:start $APP
+	;;
+
+  redis:destroy)
+    verify_app_name $APP
+	
+    REDIS_CONTAINER_NAME="redis-$APP"
+	REDIS_FLAG_PERSISTENCE_FILE="$DOKKU_ROOT/$APP/REDIS"
+
+	echo
+    dokku_log_info1 "Destroying Redis for $APP..."
+
+    dokku_log_warn "WARNING: Potentially Destructive Action"
+    dokku_log_warn "This command will destroy the Redis instance for"
+    dokku_log_warn "$APP (including all volumes and data)."
+    dokku_log_warn "To proceed, type \"$APP\""
+	echo
+	
+	read -p "> " app_name_verification
+	if [[ "$app_name_verification" != "$APP" ]]; then 
+		dokku_log_warn "Confirmation did not match. Aborted." 
+		exit 1 
+	fi
+	
+	echo
+    dokku_log_info1 "Destroying Redis for $APP..."
+	
+	# Disable Redis autostart
+	[[ -f "$REDIS_FLAG_PERSISTENCE_FILE" ]] && rm "$REDIS_FLAG_PERSISTENCE_FILE"
+	
     # Stop the container
     ID=$(docker ps | grep "$REDIS_CONTAINER_NAME" |  awk '{print $1}')
     if [[ ! -z $ID ]]; then
         docker stop $ID
     fi
+	
+	# Remove docker link
+	dokku link:delete $APP $REDIS_CONTAINER_NAME redis
 
     # Remove the container
     ID=$(docker ps -a | grep "$REDIS_CONTAINER_NAME" |  awk '{print $1}')
@@ -103,10 +188,10 @@ case "$1" in
         rm -rf $HOST_DIR
     fi
 
-    dokku link:delete $APP $REDIS_CONTAINER_NAME redis
-
     echo
-    echo "-----> Redis container destroyed: $REDIS_IMAGE"
+    echo "-----> Redis container destroyed: $APP"
+	
+	sleep 1
     ;;
 
   redis:logs)

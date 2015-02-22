@@ -1,6 +1,11 @@
-#!/bin/bash
+#!/usr/bin/env bash
+source "$(dirname $0)/../common/functions"
+# Reset bash mode from importing the functions
+set +exo pipefail
+# Fail on equation failure
+set -e
 
-# Build docker image
+# Build redis-server docker image
 git clone https://github.com/sekjun9878/dokku-redis-plugin.git /tmp/dokku-redis-plugin
 docker build -q=true -t sekjun9878/redis /tmp/dokku-redis-plugin/dockerfile
 rm -rf /tmp/dokku-redis-plugin

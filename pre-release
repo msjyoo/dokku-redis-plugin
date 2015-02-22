@@ -1,7 +1,16 @@
-#!/bin/bash
+#!/usr/bin/env bash
+source "$(dirname $0)/../common/functions"
+# Reset bash mode from importing the functions
+set +exo pipefail
+# Fail on equation failure
+set -e
 
 APP="$1"
+REDIS_FLAG_PERSISTENCE_FILE="$DOKKU_ROOT/$APP/REDIS"
 
-# Start the redis instance for this app, if one is not already running,
-# And make a link. The 1 at the end is to indicate that this is being run from a build hook
-dokku redis:start $APP 1
+# Only start Redis if it is enabled
+if [[ -f $REDIS_FLAG_PERSISTENCE_FILE ]]; then
+    # Start the redis instance for this app, if one is not already running,
+	# And make a link. The 1 at the end is to indicate that this is being run from a build hook
+	dokku redis:start $APP 1
+fi
