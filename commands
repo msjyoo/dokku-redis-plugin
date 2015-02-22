@@ -182,9 +182,10 @@ case "$1" in
 
   help)
     cat && cat<<EOF
-    redis:start <app>                               Start a Redis container for an app
-    redis:stop <app>                                Stop a Redis container of an app
-    redis:destroy <app>                             Destroy Redis volume of an app
+    redis:enable <app>                              Enable Redis for an app for next build
+    redis:start <app>                               Manually start a Redis container for an app
+    redis:rebuild <app>                             Rebuild the Redis container for an app
+    redis:destroy <app>                             Destroy Redis container and volume of an app
     redis:logs <app>                                Display last logs from Redis for an app
 EOF
     ;;
