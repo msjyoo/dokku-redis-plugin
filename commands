@@ -26,12 +26,14 @@ case "$1" in
 
     touch $REDIS_FLAG_PERSISTENCE_FILE
 
+    dokku config:set $APP REDIS_URL="redis://redis:6379/0"
+
     dokku_log_info2 "Redis enabled for $APP"
     dokku_log_verbose "Redis will be started on next build / deploy"
 
     sleep 1
     ;;
-  
+
   redis:start)
     verify_app_name $APP
 
@@ -168,6 +170,8 @@ case "$1" in
     if [[ -d $HOST_DIR ]]; then
         rm -rf $HOST_DIR
     fi
+
+    dokku config:unset $APP REDIS_URL
 
     dokku_log_info2 "Redis container destroyed:"
     dokku_log_verbose "Application: $APP"
