@@ -43,7 +43,7 @@ case "$1" in
     dokku_log_info1 "Starting Redis for $APP..."
 
     # Check if Redis container is installed
-    IMAGE=$(docker images | grep "sekjun9878/redis" | awk '{print $3}')
+    IMAGE=$(docker images | grep "redis" | awk '{print $3}')
     if [[ -z $IMAGE ]]; then
         dokku_log_fail "Redis image not found! Did you run 'dokku plugins-install'?"
     fi
