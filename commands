@@ -31,7 +31,7 @@ case "$1" in
 
     sleep 1
     ;;
-  
+
   redis:start)
     verify_app_name $APP
 
@@ -83,6 +83,10 @@ case "$1" in
     dokku link:create $APP $REDIS_CONTAINER_NAME redis
     dokku_log_info1 "Redis container linked: $APP -> $REDIS_CONTAINER_NAME"
     sleep 1
+
+    # Create REDIS_URL env variable for library / connector autoconfiguration
+    dokku config:set $APP REDIS_URL="redis://redis:6379/0"
+    dokku_log_info1 "Creating Redis autoconfiguration environment variable"
 
     dokku_log_info2 "Redis started:"
     dokku_log_verbose "Application: $APP"
@@ -168,6 +172,9 @@ case "$1" in
     if [[ -d $HOST_DIR ]]; then
         rm -rf $HOST_DIR
     fi
+
+    # Remove Redis autoconfiguration variable
+    dokku config:unset $APP REDIS_URL
 
     dokku_log_info2 "Redis container destroyed:"
     dokku_log_verbose "Application: $APP"
