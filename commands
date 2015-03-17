@@ -5,9 +5,6 @@ set +exo pipefail
 # Fail on equation failure
 set -e
 
-# Source our custom env config API
-source "$(dirname $0)/libconfig"
-
 # Check if name is specified
 if [[ $1 == redis:* ]]; then
     if [[ -z $2 ]]; then
@@ -31,72 +28,6 @@ case "$1" in
 
     dokku_log_info2 "Redis enabled for $APP"
     dokku_log_verbose "Redis will be started on next build / deploy"
-    ;;
-
-  redis:start)
-    verify_app_name $APP
-
-    REDIS_CONTAINER_NAME="redis-$APP"
-
-    # If being called manually (e.g. not from a build hook)
-    if [[ $3 -ne 1 ]]; then
-        dokku redis:enable $APP
-    fi
-
-    dokku_log_info1 "Starting Redis for $APP..."
-
-    # Check if Redis container is installed
-    IMAGE=$(docker images | grep "redis" | awk '{print $3}')
-    if [[ -z $IMAGE ]]; then
-        dokku_log_fail "Redis image not found! Did you run 'dokku plugins-install'?"
-    fi
-
-    # Check if Redis is already running
-    ID=$(docker ps | grep "$REDIS_CONTAINER_NAME" | awk '{print $1}')
-    if [[ ! -z $ID ]]; then
-        dokku_log_verbose "Redis container already running: $REDIS_CONTAINER_NAME"
-        exit 0
-    fi
-
-    # Remove old stopped container with the same name, if it exists
-    ID=$(docker ps -a | grep "$REDIS_CONTAINER_NAME" | awk '{print $1}')
-    if [[ ! -z $ID ]]; then
-        ID=$(docker rm $ID)
-        dokku_log_info1 "Removed stale Redis container $ID"
-    fi
-
-    # Check if an existing DB volume exists
-    HOST_DIR="$DOKKU_ROOT/.redis/volume-$APP"
-    if [[ -d $HOST_DIR ]]; then
-        dokku_log_info1 "Reusing volume-$APP volume"
-    else
-        dokku_log_info1 "Creating new volume"
-        mkdir -p $HOST_DIR
-    fi
-    VOLUME="$HOST_DIR:/data"
-
-    # Launch container
-    dokku_log_info1 "Starting Redis container..."
-    ID=$(docker run -v $VOLUME --name $REDIS_CONTAINER_NAME -d redis redis-server --appendonly yes)
-    sleep 4
-
-    # Link to app
-    dokku link:create $APP $REDIS_CONTAINER_NAME redis
-    dokku_log_info1 "Redis container linked: $APP -> $REDIS_CONTAINER_NAME"
-    sleep 1
-
-    # Create REDIS_URL env variable for library / connector autoconfiguration
-    dokku_log_info1 "Creating Redis autoconfiguration environment variable"
-    r_config_set_redis_url
-
-    dokku_log_info2 "Redis started:"
-    dokku_log_verbose "Application: $APP"
-    dokku_log_verbose "Redis: $REDIS_CONTAINER_NAME"
-
-    # If being called manually (e.g. not from a build hook)
-    if [[ $3 -ne 1 ]]; then
-        dokku_log_verbose "Please rebuild the app for the linking to apply"
-    fi
     ;;
 
   redis:rebuild)
