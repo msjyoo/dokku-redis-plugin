@@ -83,8 +83,8 @@ case "$1" in
     sleep 1
 
     # Create REDIS_URL env variable for library / connector autoconfiguration
-    dokku config:set $APP REDIS_URL="redis://redis:6379/0"
     dokku_log_info1 "Creating Redis autoconfiguration environment variable"
+    dokku config:set $APP REDIS_URL="redis://redis:6379/0"
 
     dokku_log_info2 "Redis started:"
     dokku_log_verbose "Application: $APP"
