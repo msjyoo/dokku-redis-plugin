@@ -6,6 +6,4 @@ set +exo pipefail
 set -e
 
 # Build redis-server docker image
-git clone https://github.com/sekjun9878/dokku-redis-plugin.git /tmp/dokku-redis-plugin
-docker build -q=true -t sekjun9878/redis /tmp/dokku-redis-plugin/dockerfile
-rm -rf /tmp/dokku-redis-plugin
+docker pull redis:latest

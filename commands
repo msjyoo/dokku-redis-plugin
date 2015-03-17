@@ -43,7 +43,7 @@ case "$1" in
     dokku_log_info1 "Starting Redis for $APP..."
 
     # Check if Redis container is installed
-    IMAGE=$(docker images | grep "sekjun9878/redis" | awk '{print $3}')
+    IMAGE=$(docker images | grep "redis" | awk '{print $3}')
     if [[ -z $IMAGE ]]; then
         dokku_log_fail "Redis image not found! Did you run 'dokku plugins-install'?"
     fi
@@ -70,11 +70,11 @@ case "$1" in
         dokku_log_info1 "Creating new volume"
         mkdir -p $HOST_DIR
     fi
-    VOLUME="$HOST_DIR:/var/lib/redis"
+    VOLUME="$HOST_DIR:/data"
 
     # Launch container
     dokku_log_info1 "Starting Redis container..."
-    ID=$(docker run -v $VOLUME --name $REDIS_CONTAINER_NAME -d sekjun9878/redis /bin/start_redis.sh)
+    ID=$(docker run -v $VOLUME --name $REDIS_CONTAINER_NAME -d redis redis-server --appendonly yes)
     sleep 4
 
     # Link to app
