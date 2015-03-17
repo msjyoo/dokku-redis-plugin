@@ -44,22 +44,33 @@ Usage of Docker Links also means that the details of the Redis instance is provi
 **How to connect to Redis inside your app:**
 The following environment variables are provided for you to connect to the Redis instance:
 ```
+# Default Docker Link variables
 REDIS_NAME=/<random_docker_generated_container_name>/redis
 REDIS_PORT=tcp://<IPv4 Address>:6379
 REDIS_PORT_6379_TCP=tcp://<IPv4 Address>:6379
 REDIS_PORT_6379_TCP_PROTO=tcp
 REDIS_PORT_6379_TCP_PORT=6379
 REDIS_PORT_6379_TCP_ADDR=<IPv4 Address>
+
+# Injected by this plugin
+REDIS_URL=redis://redis:6379/0 # For devs: This is hardcoded but does not matter anyway.
 ```
 Here is an example code for PHP, but for other languages accessing your environment variable should be straight forward.
 
-Example code for PHP:
+Example code for PHP using https://github.com/phpredis/phpredis:
 ```
 $app->redis = new Redis;
 $app->redis->connect($_ENV["REDIS_PORT_6379_TCP_ADDR"], $_ENV["REDIS_PORT_6379_TCP_PORT"], 2);
 ```
 
-You can also remap the environment variables to something else (such as REDIS_HOST) if you find the ones provided too long, but this plugin **does not** handle that for you so you'll have to do that in your application logic.
+`REDIS_URL` is also provided for when your library supports a simpler syntax such as ones used on Heroku.
+
+Example simplified code for Ruby using https://github.com/redis/redis-rb using `REDIS_URL`:
+```
+require "redis"
+
+redis = Redis.new
+```
 
 You can find more information about Docker Links here: https://docs.docker.com/userguide/dockerlinks/#environment-variables
 
