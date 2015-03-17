@@ -5,6 +5,9 @@ set +exo pipefail
 # Fail on equation failure
 set -e
 
+# Source our custom env config API
+source "$(dirname $0)/libconfig"
+
 # Check if name is specified
 if [[ $1 == redis:* ]]; then
     if [[ -z $2 ]]; then
@@ -84,7 +87,7 @@ case "$1" in
 
     # Create REDIS_URL env variable for library / connector autoconfiguration
     dokku_log_info1 "Creating Redis autoconfiguration environment variable"
-    dokku config:set $APP REDIS_URL="redis://redis:6379/0"
+    r_config_set_redis_url
 
     dokku_log_info2 "Redis started:"
     dokku_log_verbose "Application: $APP"
@@ -174,7 +177,7 @@ case "$1" in
     fi
 
     # Remove Redis autoconfiguration variable
-    dokku config:unset $APP REDIS_URL
+    r_config_unset_redis_url
 
     dokku_log_info2 "Redis container destroyed:"
     dokku_log_verbose "Application: $APP"

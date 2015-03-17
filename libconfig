@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# Prefix functions with "r_" to prevent conflict with original
+
+ENV_FILE="$DOKKU_ROOT/$APP/ENV"
+ENV_FILE_TEMP="$DOKKU_ROOT/$APP/ENV.tmp"
+
+KEY="REDIS_URL"
+VALUE="redis://redis:6379/0"
+
+r_config_create() {
+	[ -f "$ENV_FILE" ] || {
+		touch "$ENV_FILE"
+	}
+}
+
+r_config_set_redis_url() {
+	r_config_create
+	ENV_TEMP=$(cat "${ENV_FILE}")
+
+	ENV_TEMP=$(echo -e "${ENV_TEMP}" | sed "/^export $KEY=/ d")
+	ENV_TEMP="${ENV_TEMP}\nexport $KEY='$VALUE'"
+
+	r_config_write "$ENV_TEMP"
+}
+
+r_config_unset_redis_url() {
+	r_config_create
+	ENV_TEMP=$(cat "${ENV_FILE}")
+
+	ENV_TEMP=$(echo -e "${ENV_TEMP}" | sed "/^export $KEY=/ d")
+
+	r_config_write "$ENV_TEMP"
+}
+
+r_config_write () {
+	ENV_TEMP="$1"
+
+	echo -e "$ENV_TEMP" | sed '/^$/d' | sort > "$ENV_FILE_TEMP"
+
+	if ! cmp -s "$ENV_FILE" "$ENV_FILE_TEMP"; then
+		cp -f "$ENV_FILE_TEMP" "$ENV_FILE"
+		chmod 600 "$ENV_FILE"
+	fi
+
+	rm -f "$ENV_FILE_TEMP"
+}
