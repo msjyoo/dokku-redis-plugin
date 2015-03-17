@@ -136,20 +136,27 @@ case "$1" in
     REDIS_CONTAINER_ID=$(docker ps | grep "$REDIS_CONTAINER_NAME" |  awk '{print $1}')
 
     if [[ ! -f $REDIS_FLAG_PERSISTENCE_FILE ]] && [[ ! -f $REDIS_FLAG_LINK_FILE ]] && [[ ! -d $REDIS_VOLUME_DIR ]] && [[ -z $REDIS_CONTAINER_ID ]] && [[ -z $(dokku config:get $APP REDIS_URL) ]]; then
-        dokku_log_fail "No Redis instance / leftovers found for $APP"
+        dokku_log_info2 "No Redis instance / leftovers found for $APP"
+        exit 0
     fi
 
-    dokku_log_warn "WARNING: Potentially Destructive Action"
-    dokku_log_warn "This command will destroy the Redis instance for"
-    dokku_log_warn "$APP (including all volumes and data)."
-    dokku_log_warn "To proceed, type \"$APP\""
-    echo
+    confirmed=0
+    while [[ $confirmed -eq 0 ]]
+    do
+        dokku_log_warn "WARNING: Potentially Destructive Action"
+        dokku_log_warn "This command will destroy the Redis instance for"
+        dokku_log_warn "$APP (including all volumes and data)."
+        dokku_log_warn "To proceed, type \"$APP\""
+        echo
 
-    read -p "> " app_name_verification
-    if [[ "$app_name_verification" != "$APP" ]]; then
-        dokku_log_warn "Confirmation did not match. Aborted."
-        exit 1
-    fi
+        read -p "> " app_name_verification
+        if [[ "$app_name_verification" != "$APP" ]]; then
+            dokku_log_warn "Confirmation did not match."
+            echo
+        else
+            confirmed=1
+        fi
+    done
 
     dokku_log_info1 "Destroying Redis for $APP..."
 
