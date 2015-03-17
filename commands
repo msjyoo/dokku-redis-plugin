@@ -70,11 +70,11 @@ case "$1" in
         dokku_log_info1 "Creating new volume"
         mkdir -p $HOST_DIR
     fi
-    VOLUME="$HOST_DIR:/var/lib/redis"
+    VOLUME="$HOST_DIR:/data"
 
     # Launch container
     dokku_log_info1 "Starting Redis container..."
-    ID=$(docker run -v $VOLUME --name $REDIS_CONTAINER_NAME -d sekjun9878/redis /bin/start_redis.sh)
+    ID=$(docker run -v $VOLUME --name $REDIS_CONTAINER_NAME -d redis redis-server --appendonly yes)
     sleep 4
 
     # Link to app
