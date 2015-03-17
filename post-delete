@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+source "$(dirname $0)/../common/functions"
+# Reset bash mode from importing the functions
+set +exo pipefail
+# Fail on equation failure
+set -e
+
+APP="$1"
+
+dokku redis:destroy $APP

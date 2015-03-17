@@ -28,8 +28,6 @@ case "$1" in
 
     dokku_log_info2 "Redis enabled for $APP"
     dokku_log_verbose "Redis will be started on next build / deploy"
-
-    sleep 1
     ;;
 
   redis:start)
@@ -96,8 +94,6 @@ case "$1" in
     if [[ $3 -ne 1 ]]; then
         dokku_log_verbose "Please rebuild the app for the linking to apply"
     fi
-
-    sleep 1
     ;;
 
   redis:rebuild)
@@ -130,10 +126,15 @@ case "$1" in
     ;;
 
   redis:destroy)
-    verify_app_name $APP
-
     REDIS_CONTAINER_NAME="redis-$APP"
     REDIS_FLAG_PERSISTENCE_FILE="$DOKKU_ROOT/$APP/REDIS"
+    REDIS_FLAG_LINK_FILE="$DOKKU_ROOT/$APP/LINK"
+    REDIS_VOLUME_DIR="$DOKKU_ROOT/.redis/volume-$APP"
+    REDIS_CONTAINER_ID=$(docker ps | grep "$REDIS_CONTAINER_NAME" |  awk '{print $1}')
+
+    if [[ ! -f $REDIS_FLAG_PERSISTENCE_FILE ]] && [[ ! -f $REDIS_FLAG_LINK_FILE ]] && [[ ! -d $REDIS_VOLUME_DIR ]] && [[ -z $REDIS_CONTAINER_ID ]] && [[ -z $(dokku config:get $APP REDIS_URL)]]; then
+        dokku_log_fail "No Redis instance / leftovers found for $APP"
+    fi
 
     dokku_log_warn "WARNING: Potentially Destructive Action"
     dokku_log_warn "This command will destroy the Redis instance for"
@@ -153,24 +154,23 @@ case "$1" in
     [[ -f "$REDIS_FLAG_PERSISTENCE_FILE" ]] && rm "$REDIS_FLAG_PERSISTENCE_FILE"
 
     # Stop the container
-    ID=$(docker ps | grep "$REDIS_CONTAINER_NAME" |  awk '{print $1}')
-    if [[ ! -z $ID ]]; then
-        docker stop $ID > /dev/null
+    if [[ ! -z $REDIS_CONTAINER_ID ]]; then
+        docker stop $REDIS_CONTAINER_ID > /dev/null
     fi
 
     # Remove docker link
-    dokku link:delete $APP $REDIS_CONTAINER_NAME redis
+    if [[ -f $REDIS_FLAG_LINK_FILE ]]; then
+        dokku link:delete $APP $REDIS_CONTAINER_NAME redis
+    fi
 
     # Remove the container
-    ID=$(docker ps -a | grep "$REDIS_CONTAINER_NAME" |  awk '{print $1}')
-    if [[ ! -z $ID ]]; then
-        docker rm $ID > /dev/null
+    if [[ ! -z $REDIS_CONTAINER_ID ]]; then
+        docker rm $REDIS_CONTAINER_ID > /dev/null
     fi
 
     # Remove persistent volume
-    HOST_DIR="$DOKKU_ROOT/.redis/volume-$APP"
-    if [[ -d $HOST_DIR ]]; then
-        rm -rf $HOST_DIR
+    if [[ -d $REDIS_VOLUME_DIR ]]; then
+        rm -rf $REDIS_VOLUME_DIR
     fi
 
     # Remove Redis autoconfiguration variable
@@ -178,8 +178,6 @@ case "$1" in
 
     dokku_log_info2 "Redis container destroyed:"
     dokku_log_verbose "Application: $APP"
-
-    sleep 1
     ;;
 
   redis:logs)
