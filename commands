@@ -128,7 +128,7 @@ case "$1" in
     REDIS_VOLUME_DIR="$DOKKU_ROOT/.redis/volume-$APP"
     REDIS_CONTAINER_ID=$(docker ps | grep "$REDIS_CONTAINER_NAME" |  awk '{print $1}')
 
-    if [[ ! -f $REDIS_FLAG_PERSISTENCE_FILE ] && [ ! -f $REDIS_FLAG_LINK_FILE ] && [ ! -d $REDIS_VOLUME_DIR ] && [ -z $REDIS_CONTAINER_ID ]]; then
+    if [[ ! -f $REDIS_FLAG_PERSISTENCE_FILE ]] && [[ ! -f $REDIS_FLAG_LINK_FILE ]] && [[ ! -d $REDIS_VOLUME_DIR ]] && [[ -z $REDIS_CONTAINER_ID ]] && [[ -z $(dokku config:get $APP REDIS_URL)]]; then
         dokku_log_fail "No Redis instance / leftovers found for $APP"
     fi
 
