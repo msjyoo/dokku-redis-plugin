@@ -45,7 +45,7 @@ if [[ -f $REDIS_FLAG_PERSISTENCE_FILE ]]; then
 
     # Launch container
     dokku_log_info1 "Starting Redis container..."
-    docker run -v $VOLUME --name $REDIS_CONTAINER_NAME -d redis redis-server --appendonly yes #TODO: THis line should not output the ID. Put it in variable?
+    ID=$(docker run -v $VOLUME --name $REDIS_CONTAINER_NAME -d redis redis-server --appendonly yes)
 
     dokku_log_info2 "Redis started:"
     dokku_log_verbose "Application: $APP"
