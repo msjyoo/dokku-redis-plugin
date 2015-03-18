@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+source "$(dirname $0)/../common/functions"
+# Reset bash mode from importing the functions
+set +exo pipefail
+# Fail on equation failure
+set -e
+
+APP="$1"
+REDIS_FLAG_PERSISTENCE_FILE="$DOKKU_ROOT/$APP/REDIS"
+REDIS_CONTAINER_NAME="redis-$APP"
+
+# Only start Redis if it is enabled
+if [[ -f $REDIS_FLAG_PERSISTENCE_FILE ]]; then
+	# Source our custom env config API
+	source "$(dirname $0)/libconfig"
+
+	dokku_log_info1 "Preparing Redis for $APP..."
+
+    # Link to app
+    dokku link:create $APP $REDIS_CONTAINER_NAME redis
+    dokku_log_info1 "Redis container linked: $APP -> $REDIS_CONTAINER_NAME"
+
+	# Create REDIS_URL env variable for library / connector autoconfiguration
+	dokku_log_info1 "Creating Redis autoconfiguration environment variable"
+	r_config_set_redis_url
+fi

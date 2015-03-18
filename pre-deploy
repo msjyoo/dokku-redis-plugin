@@ -7,10 +7,47 @@ set -e
 
 APP="$1"
 REDIS_FLAG_PERSISTENCE_FILE="$DOKKU_ROOT/$APP/REDIS"
+REDIS_CONTAINER_NAME="redis-$APP"
 
 # Only start Redis if it is enabled
 if [[ -f $REDIS_FLAG_PERSISTENCE_FILE ]]; then
-    # Start the redis instance for this app, if one is not already running,
-    # And make a link. The 1 at the end is to indicate that this is being run from a build hook
-    dokku redis:start $APP 1
+    dokku_log_info1 "Starting Redis for $APP..."
+
+    # Check if Redis container is installed
+    IMAGE=$(docker images | grep "redis" | awk '{print $3}')
+    if [[ -z $IMAGE ]]; then
+        dokku_log_fail "Redis image not found! Did you run 'dokku plugins-install'?"
+    fi
+
+    # Check if Redis is already running
+    ID=$(docker ps | grep "$REDIS_CONTAINER_NAME" | awk '{print $1}')
+    if [[ ! -z $ID ]]; then
+        dokku_log_verbose "Redis container already running: $REDIS_CONTAINER_NAME"
+        exit 0
+    fi
+
+    # Remove old stopped container with the same name, if it exists
+    ID=$(docker ps -a | grep "$REDIS_CONTAINER_NAME" | awk '{print $1}')
+    if [[ ! -z $ID ]]; then
+        ID=$(docker rm $ID)
+        dokku_log_info1 "Removed stale Redis container $ID"
+    fi
+
+    # Check if an existing DB volume exists
+    HOST_DIR="$DOKKU_ROOT/.redis/volume-$APP"
+    if [[ -d $HOST_DIR ]]; then
+        dokku_log_info1 "Reusing volume-$APP volume"
+    else
+        dokku_log_info1 "Creating new volume"
+        mkdir -p $HOST_DIR
+    fi
+    VOLUME="$HOST_DIR:/data"
+
+    # Launch container
+    dokku_log_info1 "Starting Redis container..."
+    docker run -v $VOLUME --name $REDIS_CONTAINER_NAME -d redis redis-server --appendonly yes
+
+    dokku_log_info2 "Redis started:"
+    dokku_log_verbose "Application: $APP"
+    dokku_log_verbose "Redis: $REDIS_CONTAINER_NAME"
 fi
