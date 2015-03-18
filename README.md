@@ -18,7 +18,7 @@ $ sudo su # (Required for permissions - don't use sudo)
 ```
 $ sudo su # (Required for permissions - don't use sudo)
 # cd /var/lib/dokku/plugins
-# git clone https://github.com/sekjun9878/dokku-redis-plugin redis
+# git clone --branch v1.0.0 --depth 1 https://github.com/sekjun9878/dokku-redis-plugin redis
 # dokku plugins-install
 ```
 
@@ -90,6 +90,7 @@ $ ssh dokku@server redis:enable example-org # Client side
 ```
 
 Deploy your app with the same name (client side):
+Note: Output may be different depending on plugin version and environment.
 ```
 $ git remote add dokku git@server:example-org
 $ git push dokku master
