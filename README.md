@@ -27,10 +27,7 @@ Commands
 ```
 # dokku help
     redis:enable <app>     Enable Redis for an app for next build
-    redis:start <app>      Manually start a Redis container for an app
-    redis:rebuild <app>    Rebuild the Redis container for an app
     redis:destroy <app>    Destroy Redis container and volume of an app
-    redis:logs <app>       Display last logs from Redis for an app
 ```
 
 Simple usage
@@ -90,7 +87,6 @@ $ ssh dokku@server redis:enable example-org # Client side
 -----> Enabling Redis for example-org...
 =====> Redis enabled for example-org
        Redis will be started on next build / deploy
-       
 ```
 
 Deploy your app with the same name (client side):
@@ -139,24 +135,9 @@ Advanced usage
 dokku redis:enable example-org
 ```
 
-**Manually start Redis for an application.** This will automatically enable Redis, as well as start it like it would during a normal deploy. You will still have to rebuild your application for the Docker link to take affect.
-```
-dokku redis:start example-org
-```
-
-**Rebuild Redis for an application.** This may be useful if your Redis instance has crashed. This is essentially the same as running :destroy then :start, **except the volume is left intact.**
-```
-dokku redis:rebuild example-org
-```
-
 **Destroy Redis for an application.** This completely destroys Redis for an application, **including all data**. Docker Links and Redis container will all be removed. This will prompt you for a verification. Please use carefully.
 ```
 dokku redis:destroy example-org
-```
-
-**Get Docker Logs of Redis.** This shows you the last 100 lines of Docker Logs for the Redis container. Doesn't really have much usage atm. - This is not the same as Redis MONITOR.
-```
-dokku redis:logs example-org
 ```
 
 License

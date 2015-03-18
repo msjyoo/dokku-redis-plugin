@@ -14,13 +14,18 @@ if [[ $1 == redis:* ]]; then
     fi
 fi
 
+REDIS_CONTAINER_NAME="redis-$APP"
+REDIS_FLAG_PERSISTENCE_FILE="$DOKKU_ROOT/$APP/REDIS"
+REDIS_FLAG_LINK_FILE="$DOKKU_ROOT/$APP/LINK"
+REDIS_VOLUME_DIR="$DOKKU_ROOT/.redis/volume-$APP"
+REDIS_CONTAINER_ID=$(docker ps | grep "$REDIS_CONTAINER_NAME" |  awk '{print $1}')
+
+source "$(dirname $0)/libconfig"
+
 case "$1" in
 
   redis:enable)
     verify_app_name $APP
-
-    REDIS_CONTAINER_NAME="redis-$APP"
-    REDIS_FLAG_PERSISTENCE_FILE="$DOKKU_ROOT/$APP/REDIS"
 
     dokku_log_info1 "Enabling Redis for $APP..."
 
@@ -30,42 +35,7 @@ case "$1" in
     dokku_log_verbose "Redis will be started on next build / deploy"
     ;;
 
-  redis:rebuild)
-    verify_app_name $APP
-
-    REDIS_CONTAINER_NAME="redis-$APP"
-
-    dokku_log_info1 "Rebuilding Redis for $APP..."
-    dokku_log_info1 "Removing Redis for $APP..."
-
-    # Stop the container
-    ID=$(docker ps | grep "$REDIS_CONTAINER_NAME" |  awk '{print $1}')
-    if [[ ! -z $ID ]]; then
-        docker stop $ID > /dev/null
-    fi
-
-    # Remove docker link
-    dokku link:delete $APP $REDIS_CONTAINER_NAME redis
-
-    # Remove the container
-    ID=$(docker ps -a | grep "$REDIS_CONTAINER_NAME" |  awk '{print $1}')
-    if [[ ! -z $ID ]]; then
-        docker rm $ID > /dev/null
-    fi
-
-    dokku_log_info2 "Redis removed:"
-    dokku_log_verbose "Application: $APP"
-
-    dokku redis:start $APP
-    ;;
-
   redis:destroy)
-    REDIS_CONTAINER_NAME="redis-$APP"
-    REDIS_FLAG_PERSISTENCE_FILE="$DOKKU_ROOT/$APP/REDIS"
-    REDIS_FLAG_LINK_FILE="$DOKKU_ROOT/$APP/LINK"
-    REDIS_VOLUME_DIR="$DOKKU_ROOT/.redis/volume-$APP"
-    REDIS_CONTAINER_ID=$(docker ps | grep "$REDIS_CONTAINER_NAME" |  awk '{print $1}')
-
     if [[ ! -f $REDIS_FLAG_PERSISTENCE_FILE ]] && [[ ! -f $REDIS_FLAG_LINK_FILE ]] && [[ ! -d $REDIS_VOLUME_DIR ]] && [[ -z $REDIS_CONTAINER_ID ]] && [[ -z $(dokku config:get $APP REDIS_URL) ]]; then
         dokku_log_info2 "No Redis instance / leftovers found for $APP"
         exit 0
@@ -117,22 +87,14 @@ case "$1" in
     # Remove Redis autoconfiguration variable
     r_config_unset_redis_url
 
-    dokku_log_info2 "Redis container destroyed:"
+    dokku_log_info2 "Redis instance / volume destroyed:"
     dokku_log_verbose "Application: $APP"
-    ;;
-
-  redis:logs)
-    REDIS_CONTAINER_NAME="redis-$APP"
-    docker logs $REDIS_CONTAINER_NAME | tail -n 100
     ;;
 
   help)
     cat && cat<<EOF
     redis:enable <app>                              Enable Redis for an app for next build
-    redis:start <app>                               Manually start a Redis container for an app
-    redis:rebuild <app>                             Rebuild the Redis container for an app
     redis:destroy <app>                             Destroy Redis container and volume of an app
-    redis:logs <app>                                Display last logs from Redis for an app
 EOF
     ;;
 
