@@ -9,4 +9,4 @@ APP="$1"
 REDIS_FLAG_PERSISTENCE_FILE="$DOKKU_ROOT/$APP/REDIS"
 REDIS_CONTAINER_NAME="redis-$APP"
 
-dokku link:delete "$APP" "$REDIS_CONTAINER_NAME" redis
+dokku docker-options:remove "$APP" deploy,run "--link $REDIS_CONTAINER_NAME:redis"
