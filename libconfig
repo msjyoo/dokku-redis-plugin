@@ -5,7 +5,7 @@ ENV_FILE="$DOKKU_ROOT/$APP/ENV"
 ENV_FILE_TEMP="$DOKKU_ROOT/$APP/ENV.tmp"
 
 KEY="REDIS_URL"
-VALUE="redis://redis:6379/0"
+VALUE="redis://redis:6379"
 
 r_config_create() {
 	[ -f "$ENV_FILE" ] || {
