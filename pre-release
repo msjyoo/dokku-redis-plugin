@@ -17,7 +17,7 @@ if [[ -f $REDIS_FLAG_PERSISTENCE_FILE ]]; then
 	dokku_log_info1 "Preparing Redis for $APP..."
 
     # Link to app
-    dokku link:create $APP $REDIS_CONTAINER_NAME redis
+    dokku docker-options:add "$APP" deploy,run "--link $REDIS_CONTAINER_NAME:redis"
     dokku_log_info1 "Redis container linked: $APP -> $REDIS_CONTAINER_NAME"
 
 	# Create REDIS_URL env variable for library / connector autoconfiguration

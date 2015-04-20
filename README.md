@@ -7,14 +7,6 @@ This plugin is a fork of another Dokku Redis plugin by **Vlorent Viel**, which y
 
 Installation
 ------------
-Prerequisites:
-- Dokku Link https://github.com/rlaneve/dokku-link
-```
-$ sudo su # (Required for permissions - don't use sudo)
-# cd /var/lib/dokku/plugins
-# git clone https://github.com/rlaneve/dokku-link.git link
-```
-
 ```
 $ sudo su # (Required for permissions - don't use sudo)
 # cd /var/lib/dokku/plugins
