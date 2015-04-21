@@ -42,7 +42,7 @@ REDIS_PORT_6379_TCP_PORT=6379
 REDIS_PORT_6379_TCP_ADDR=<IPv4 Address>
 
 # Injected by this plugin
-REDIS_URL=redis://redis:6379/0 # For devs: This is hardcoded but does not matter anyway.
+REDIS_URL=redis://redis:6379 # For devs: This is hardcoded but does not matter anyway.
 ```
 Here is an example code for PHP, but for other languages accessing your environment variable should be straight forward.
 
