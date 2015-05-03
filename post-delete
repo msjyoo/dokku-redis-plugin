@@ -7,4 +7,4 @@ set -e
 
 APP="$1"
 
-dokku redis:destroy $APP
+dokku redis:destroy $APP 1 # This indicates that this is being called from event
