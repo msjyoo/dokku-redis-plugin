@@ -11,16 +11,16 @@ REDIS_CONTAINER_NAME="redis-$APP"
 
 # Only start Redis if it is enabled
 if [[ -f $REDIS_FLAG_PERSISTENCE_FILE ]]; then
-	# Source our custom env config API
-	source "$(dirname $0)/libconfig"
+    # Source our custom env config API
+    source "$(dirname $0)/libconfig"
 
-	dokku_log_info1 "Preparing Redis for $APP..."
+    dokku_log_info1 "Preparing Redis for $APP..."
 
     # Link to app
     dokku docker-options:add "$APP" deploy,run "--link $REDIS_CONTAINER_NAME:redis"
     dokku_log_info1 "Redis container linked: $APP -> $REDIS_CONTAINER_NAME"
 
-	# Create REDIS_URL env variable for library / connector autoconfiguration
-	dokku_log_info1 "Creating Redis autoconfiguration environment variable"
-	r_config_set_redis_url
+    # Create REDIS_URL env variable for library / connector autoconfiguration
+    dokku_log_info1 "Creating Redis autoconfiguration environment variable"
+    r_config_set_redis_url
 fi
