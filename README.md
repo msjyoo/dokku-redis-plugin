@@ -7,17 +7,20 @@ This plugin is a fork of another Dokku Redis plugin by **Vlorent Viel**, which y
 
 Installation
 ------------
+The current latest version of Dokku Redis Plugin is v1.0.1, which was tested on Dokku v0.3.17.
+
 ```
-$ sudo su # (Required for permissions - don't use sudo)
-# cd /var/lib/dokku/plugins
-# git clone --branch v1.0.0 --depth 1 https://github.com/sekjun9878/dokku-redis-plugin redis
-# dokku plugins-install
+$ cd /var/lib/dokku/plugins
+$ sudo git clone --branch v1.0.1 --depth 1 https://github.com/sekjun9878/dokku-redis-plugin redis
+$ sudo dokku plugins-install
 ```
+
+Note that you might need to use su (not sudo) in some cases due to permissions.
 
 Commands
 --------
 ```
-# dokku help
+$ sudo dokku help
     redis:enable <app>     Enable Redis for an app for next build
     redis:destroy <app>    Destroy Redis container and volume of an app
 ```
