@@ -20,8 +20,6 @@ REDIS_FLAG_LINK_FILE="$DOKKU_ROOT/$APP/LINK"
 REDIS_VOLUME_DIR="$DOKKU_ROOT/.redis/volume-$APP"
 REDIS_CONTAINER_ID=$(docker ps | grep "$REDIS_CONTAINER_NAME" |  awk '{print $1}')
 
-source "$(dirname $0)/libconfig"
-
 case "$1" in
 
   redis:enable)
@@ -87,7 +85,7 @@ case "$1" in
     fi
 
     # Remove Redis autoconfiguration variable
-    r_config_unset_redis_url
+    dokku config:unset-norestart "$APP" "REDIS_URL"
 
     dokku_log_info2 "Redis instance / volume destroyed:"
     dokku_log_verbose "Application: $APP"
