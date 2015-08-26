@@ -7,11 +7,13 @@ This plugin is a fork of another Dokku Redis plugin by **Vlorent Viel**, which y
 
 Installation
 ------------
-Please see the Release tab for current and previous releases. Please note that while I strive to provide maximum reliability, I do not always have time to test releases so use at your own caution :)
+The current latest version of Dokku Redis Plugin is v1.0.2, which was tested on Dokku v0.3.26.
+
+You can also see the Release tab for current and previous releases. Please be aware that while I strive to provide maximum reliability, I do not always have time to test releases so use at your own caution :)
 
 ```
 $ cd /var/lib/dokku/plugins
-$ sudo git clone --branch v1.0.1 --depth 1 https://github.com/sekjun9878/dokku-redis-plugin redis
+$ sudo git clone --branch v1.0.2 --depth 1 https://github.com/sekjun9878/dokku-redis-plugin redis
 $ sudo dokku plugins-install
 ```
 
