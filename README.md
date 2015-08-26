@@ -7,7 +7,7 @@ This plugin is a fork of another Dokku Redis plugin by **Vlorent Viel**, which y
 
 Installation
 ------------
-The current latest version of Dokku Redis Plugin is v1.0.1, which was tested on Dokku v0.3.17.
+Please see the Release tab for current and previous releases. Please note that while I strive to provide maximum reliability, I do not always have time to test releases so use at your own caution :)
 
 ```
 $ cd /var/lib/dokku/plugins
