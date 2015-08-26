@@ -93,8 +93,8 @@ case "$1" in
 
   help)
     cat && cat<<EOF
-    redis:enable <app>                              Enable Redis for an app for next build
-    redis:destroy <app>                             Destroy Redis container and volume of an app
+    redis:enable <app>, Enable Redis for an app for next build
+    redis:destroy <app>, Destroy Redis container and volume of an app
 EOF
     ;;
 
