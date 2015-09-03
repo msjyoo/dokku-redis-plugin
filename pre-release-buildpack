@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-source "$(dirname $0)/../common/functions"
+source "$PLUGIN_PATH/common/functions"
 # Reset bash mode from importing the functions
 set +exo pipefail
 # Fail on equation failure
